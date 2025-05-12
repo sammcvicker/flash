@@ -4,7 +4,15 @@ import click
 import csv
 import random
 import sys
-from typing import List, Tuple, Dict
+import os
+from typing import List, Tuple, Dict, Optional
+
+try:
+    from .voice import VoiceReader, AVAILABLE_VOICES, DEFAULT_VOICE, LANGUAGE_INSTRUCTIONS
+    VOICE_AVAILABLE = True
+except (ImportError, ModuleNotFoundError):
+    VOICE_AVAILABLE = False
+    LANGUAGE_INSTRUCTIONS = {}
 
 
 def load_cards(
@@ -39,7 +47,12 @@ def load_cards(
 
 
 def run_round(
-    cards: List[Tuple[str, str]], confirm: bool, round_num: int = 1
+    cards: List[Tuple[str, str]], 
+    confirm: bool, 
+    round_num: int = 1,
+    voice_col: Optional[int] = None,
+    voice: Optional[str] = None,
+    language: Optional[str] = None
 ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
     """
     Run a single round of flashcards.
@@ -48,16 +61,44 @@ def run_round(
         cards: List of (question, answer) tuples
         confirm: Whether to require typing the correct answer when wrong
         round_num: The current round number
+        voice_col: Column to read aloud using text-to-speech (0-based)
+        voice: Voice to use for text-to-speech
+        language: Language to use for text-to-speech
 
     Returns:
         Tuple of (correct_cards, incorrect_cards)
     """
     correct_cards = []
     incorrect_cards = []
+    
+    voice_reader = None
+    voice_enabled = VOICE_AVAILABLE and voice_col is not None
+    
+    if voice_enabled:
+        try:
+            voice_reader = VoiceReader()
+        except Exception as e:
+            click.echo(click.style(f"Error initializing voice reader: {e}", fg="red"))
+            if click.confirm("Continue without voice?", default=True):
+                voice_enabled = False
+            else:
+                sys.exit(1)
 
     click.echo(f"\n--- Round {round_num} ({len(cards)} cards) ---")
 
     for i, (question, answer) in enumerate(cards, 1):
+        # Play audio if requested and available
+        if voice_enabled and voice_reader is not None:
+            try:
+                text_to_speak = question if voice_col == 0 else answer
+                voice_reader.speak(text_to_speak, voice or DEFAULT_VOICE, language)
+            except Exception as e:
+                click.echo(click.style(f"Voice error: {e}", fg="red"))
+                if click.confirm("Continue without voice?", default=True):
+                    voice_enabled = False
+                else:
+                    sys.exit(1)
+        
         click.echo(f"\n[{i}/{len(cards)}] {question}")
         user_answer = click.prompt("Your answer", type=str)
 
@@ -118,6 +159,25 @@ def run_round(
     default=1,
     help="Column index to use for answers (0-based, default: 1).",
 )
+@click.option(
+    "-v",
+    "--voice",
+    "voice_col",
+    type=int,
+    help="Column index to read aloud using text-to-speech (0-based).",
+)
+@click.option(
+    "--voice-type",
+    type=str,
+    default=DEFAULT_VOICE if VOICE_AVAILABLE else None,
+    help=f"Voice to use for text-to-speech. Available voices: {', '.join(AVAILABLE_VOICES) if VOICE_AVAILABLE else 'none'}."
+)
+@click.option(
+    "-l",
+    "--language",
+    type=str,
+    help=f"Language to use for text-to-speech. Available languages: {', '.join(LANGUAGE_INSTRUCTIONS.keys()) if VOICE_AVAILABLE else 'none'}."
+)
 def flash(
     csv_path: str,
     shuffle: bool,
@@ -125,6 +185,9 @@ def flash(
     recursive: bool,
     from_col: int,
     to_col: int,
+    voice_col: Optional[int] = None,
+    voice_type: Optional[str] = None,
+    language: Optional[str] = None,
 ) -> None:
     """A simple flashcard CLI tool.
 
@@ -139,6 +202,38 @@ def flash(
     if from_col == to_col:
         click.echo("Error: Question and answer columns must be different.")
         sys.exit(1)
+        
+    # Check voice options
+    if voice_col is not None:
+        if not VOICE_AVAILABLE:
+            click.echo(click.style("Error: Voice functionality not available. Make sure the OpenAI package is installed.", fg="red"))
+            if not click.confirm("Continue without voice?", default=True):
+                sys.exit(1)
+            voice_col = None
+            
+        elif voice_col < 0:
+            click.echo(click.style("Error: Voice column index must be non-negative.", fg="red"))
+            if not click.confirm("Continue without voice?", default=True):
+                sys.exit(1)
+            voice_col = None
+            
+        elif voice_type and voice_type not in AVAILABLE_VOICES:
+            click.echo(click.style(f"Error: Invalid voice type. Choose from: {', '.join(AVAILABLE_VOICES)}", fg="red"))
+            if not click.confirm("Continue without voice?", default=True):
+                sys.exit(1)
+            voice_col = None
+            
+        elif language and language.lower() not in LANGUAGE_INSTRUCTIONS:
+            click.echo(click.style(f"Error: Invalid language. Choose from: {', '.join(LANGUAGE_INSTRUCTIONS.keys())}", fg="red"))
+            if not click.confirm("Continue without voice?", default=True):
+                sys.exit(1)
+            voice_col = None
+            
+        elif not os.environ.get("OPENAI_API_KEY"):
+            click.echo(click.style("Error: OPENAI_API_KEY environment variable is not set.", fg="red"))
+            if not click.confirm("Continue without voice?", default=True):
+                sys.exit(1)
+            voice_col = None
 
     cards = load_cards(csv_path, from_col, to_col)
 
@@ -150,7 +245,14 @@ def flash(
     all_results: Dict[int, Tuple[int, int]] = {}  # {round: (correct, total)}
 
     while current_cards:
-        _, incorrect_cards = run_round(current_cards, confirm, round_num)
+        _, incorrect_cards = run_round(
+            current_cards, 
+            confirm, 
+            round_num, 
+            voice_col, 
+            voice_type,
+            language
+        )
 
         # Store the results for this round
         all_results[round_num] = (
