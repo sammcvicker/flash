@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 
-import click
 import csv
+import os
 import random
 import sys
-import os
-from typing import List, Tuple, Dict, Optional
+from typing import Dict, List, Optional, Tuple
+
+import click
 
 try:
-    from .voice import VoiceReader, AVAILABLE_VOICES, DEFAULT_VOICE, LANGUAGE_INSTRUCTIONS
+    from .voice import (
+        AVAILABLE_VOICES,
+        DEFAULT_VOICE,
+        LANGUAGE_INSTRUCTIONS,
+        VoiceReader,
+    )
+
     VOICE_AVAILABLE = True
 except (ImportError, ModuleNotFoundError):
     VOICE_AVAILABLE = False
@@ -47,12 +54,12 @@ def load_cards(
 
 
 def run_round(
-    cards: List[Tuple[str, str]], 
-    confirm: bool, 
+    cards: List[Tuple[str, str]],
+    confirm: bool,
     round_num: int = 1,
     voice_col: Optional[int] = None,
     voice: Optional[str] = None,
-    language: Optional[str] = None
+    language: Optional[str] = None,
 ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
     """
     Run a single round of flashcards.
@@ -70,10 +77,10 @@ def run_round(
     """
     correct_cards = []
     incorrect_cards = []
-    
+
     voice_reader = None
     voice_enabled = VOICE_AVAILABLE and voice_col is not None
-    
+
     if voice_enabled:
         try:
             voice_reader = VoiceReader()
@@ -98,7 +105,7 @@ def run_round(
                     voice_enabled = False
                 else:
                     sys.exit(1)
-        
+
         click.echo(f"\n[{i}/{len(cards)}] {question}")
         user_answer = click.prompt("Your answer", type=str)
 
@@ -122,7 +129,7 @@ def run_round(
         correct_count = len(correct_cards)
         total_count = len(cards)
         click.echo(
-            f"\nRound {round_num}: You got {correct_count} out of {total_count} correct ({correct_count/total_count*100:.1f}%)."
+            f"\nRound {round_num}: You got {correct_count} out of {total_count} correct ({correct_count / total_count * 100:.1f}%)."
         )
 
     return correct_cards, incorrect_cards
@@ -170,13 +177,13 @@ def run_round(
     "--voice-type",
     type=str,
     default=DEFAULT_VOICE if VOICE_AVAILABLE else None,
-    help=f"Voice to use for text-to-speech. Available voices: {', '.join(AVAILABLE_VOICES) if VOICE_AVAILABLE else 'none'}."
+    help=f"Voice to use for text-to-speech. Available voices: {', '.join(AVAILABLE_VOICES) if VOICE_AVAILABLE else 'none'}.",
 )
 @click.option(
     "-l",
     "--language",
     type=str,
-    help=f"Language to use for text-to-speech. Available languages: {', '.join(LANGUAGE_INSTRUCTIONS.keys()) if VOICE_AVAILABLE else 'none'}."
+    help=f"Language to use for text-to-speech. Available languages: {', '.join(LANGUAGE_INSTRUCTIONS.keys()) if VOICE_AVAILABLE else 'none'}.",
 )
 def flash(
     csv_path: str,
@@ -202,35 +209,56 @@ def flash(
     if from_col == to_col:
         click.echo("Error: Question and answer columns must be different.")
         sys.exit(1)
-        
+
     # Check voice options
     if voice_col is not None:
         if not VOICE_AVAILABLE:
-            click.echo(click.style("Error: Voice functionality not available. Make sure the OpenAI package is installed.", fg="red"))
+            click.echo(
+                click.style(
+                    "Error: Voice functionality not available. Make sure the OpenAI package is installed.",
+                    fg="red",
+                )
+            )
             if not click.confirm("Continue without voice?", default=True):
                 sys.exit(1)
             voice_col = None
-            
+
         elif voice_col < 0:
-            click.echo(click.style("Error: Voice column index must be non-negative.", fg="red"))
+            click.echo(
+                click.style("Error: Voice column index must be non-negative.", fg="red")
+            )
             if not click.confirm("Continue without voice?", default=True):
                 sys.exit(1)
             voice_col = None
-            
+
         elif voice_type and voice_type not in AVAILABLE_VOICES:
-            click.echo(click.style(f"Error: Invalid voice type. Choose from: {', '.join(AVAILABLE_VOICES)}", fg="red"))
+            click.echo(
+                click.style(
+                    f"Error: Invalid voice type. Choose from: {', '.join(AVAILABLE_VOICES)}",
+                    fg="red",
+                )
+            )
             if not click.confirm("Continue without voice?", default=True):
                 sys.exit(1)
             voice_col = None
-            
+
         elif language and language.lower() not in LANGUAGE_INSTRUCTIONS:
-            click.echo(click.style(f"Error: Invalid language. Choose from: {', '.join(LANGUAGE_INSTRUCTIONS.keys())}", fg="red"))
+            click.echo(
+                click.style(
+                    f"Error: Invalid language. Choose from: {', '.join(LANGUAGE_INSTRUCTIONS.keys())}",
+                    fg="red",
+                )
+            )
             if not click.confirm("Continue without voice?", default=True):
                 sys.exit(1)
             voice_col = None
-            
+
         elif not os.environ.get("OPENAI_API_KEY"):
-            click.echo(click.style("Error: OPENAI_API_KEY environment variable is not set.", fg="red"))
+            click.echo(
+                click.style(
+                    "Error: OPENAI_API_KEY environment variable is not set.", fg="red"
+                )
+            )
             if not click.confirm("Continue without voice?", default=True):
                 sys.exit(1)
             voice_col = None
@@ -246,12 +274,7 @@ def flash(
 
     while current_cards:
         _, incorrect_cards = run_round(
-            current_cards, 
-            confirm, 
-            round_num, 
-            voice_col, 
-            voice_type,
-            language
+            current_cards, confirm, round_num, voice_col, voice_type, language
         )
 
         # Store the results for this round
@@ -274,10 +297,10 @@ def flash(
     # Show a final summary if we had multiple rounds
     if recursive and round_num > 1:
         click.echo("\n--- Final Summary ---")
-        total_cards = len(cards)
+        _ = len(cards)
         for r, (correct, total) in all_results.items():
             click.echo(
-                f"Round {r}: {correct}/{total} correct ({correct/total*100:.1f}%)"
+                f"Round {r}: {correct}/{total} correct ({correct / total * 100:.1f}%)"
             )
 
         if not incorrect_cards:
