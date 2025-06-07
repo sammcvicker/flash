@@ -1,6 +1,5 @@
 """Tests for the CLI module."""
 
-import csv
 import os
 import tempfile
 from pathlib import Path

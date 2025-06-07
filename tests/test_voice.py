@@ -1,15 +1,12 @@
 """Tests for the voice module."""
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 try:
-    from openai import AuthenticationError
-
     from flash.voice import (
         AVAILABLE_VOICES,
         DEFAULT_VOICE,
@@ -227,7 +224,7 @@ class TestAudioPlayback:
         """Test play_audio on Windows."""
         # Mock os.startfile since it doesn't exist on non-Windows systems
         with patch("os.name", "nt"):
-            with patch("os.startfile", create=True) as mock_startfile:
+            with patch("os.startfile", create=True):
                 self.voice_reader.play_audio(self.test_audio_file)
 
         import time

@@ -54,21 +54,15 @@ Thank you for your interest in contributing to Flash! This document provides gui
 
 ### Code Quality Standards
 
-We maintain high code quality through automated tools:
+We maintain high code quality through automated tools (using modern Ruff for speed and consistency):
 
-#### Formatting
+#### Formatting and Linting
 ```bash
-# Format code with black
-uv run black flash/ tests/
+# Format code with ruff
+uv run ruff format flash/ tests/
 
-# Sort imports with isort
-uv run isort flash/ tests/
-```
-
-#### Linting
-```bash
-# Check code style with flake8
-uv run flake8 flash/ tests/
+# Lint and fix issues with ruff
+uv run ruff check --fix flash/ tests/
 
 # Type checking with mypy
 uv run mypy flash/
@@ -128,9 +122,8 @@ The voice feature requires special consideration:
 
 2. **Check code quality**:
    ```bash
-   uv run black --check flash/ tests/
-   uv run isort --check-only flash/ tests/
-   uv run flake8 flash/ tests/
+   uv run ruff check flash/ tests/
+   uv run ruff format --check flash/ tests/
    uv run mypy flash/
    ```
 

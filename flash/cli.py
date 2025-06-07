@@ -4,7 +4,6 @@ import csv
 import os
 import random
 import sys
-from typing import Dict, List, Optional, Tuple
 
 import click
 
@@ -24,7 +23,7 @@ except (ImportError, ModuleNotFoundError):
 
 def load_cards(
     csv_path: str, from_col: int = 0, to_col: int = 1
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     """Load flashcards from a CSV file.
 
     Args:
@@ -34,7 +33,7 @@ def load_cards(
     """
     cards = []
     try:
-        with open(csv_path, "r", encoding="utf-8") as f:
+        with open(csv_path, encoding="utf-8") as f:
             reader = csv.reader(f)
             for row in reader:
                 if len(row) > max(from_col, to_col):
@@ -54,13 +53,13 @@ def load_cards(
 
 
 def run_round(
-    cards: List[Tuple[str, str]],
+    cards: list[tuple[str, str]],
     confirm: bool,
     round_num: int = 1,
-    voice_col: Optional[int] = None,
-    voice: Optional[str] = None,
-    language: Optional[str] = None,
-) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    voice_col: int | None = None,
+    voice: str | None = None,
+    language: str | None = None,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     """
     Run a single round of flashcards.
 
@@ -192,9 +191,9 @@ def flash(
     recursive: bool,
     from_col: int,
     to_col: int,
-    voice_col: Optional[int] = None,
-    voice_type: Optional[str] = None,
-    language: Optional[str] = None,
+    voice_col: int | None = None,
+    voice_type: str | None = None,
+    language: str | None = None,
 ) -> None:
     """A simple flashcard CLI tool.
 
@@ -270,7 +269,7 @@ def flash(
 
     round_num = 1
     current_cards = cards
-    all_results: Dict[int, Tuple[int, int]] = {}  # {round: (correct, total)}
+    all_results: dict[int, tuple[int, int]] = {}  # {round: (correct, total)}
 
     while current_cards:
         _, incorrect_cards = run_round(

@@ -8,7 +8,6 @@ import os
 import subprocess
 import threading
 from pathlib import Path
-from typing import Optional
 
 from openai import AuthenticationError, OpenAI
 
@@ -39,7 +38,7 @@ LANGUAGE_INSTRUCTIONS = {
 class VoiceReader:
     """Handles text-to-speech conversion for flashcards."""
 
-    def __init__(self, cache_dir: Optional[str] = None):
+    def __init__(self, cache_dir: str | None = None):
         """Initialize the voice reader.
 
         Args:
@@ -59,7 +58,7 @@ class VoiceReader:
         self.active_playback_threads = []
 
     def get_audio_path(
-        self, text: str, voice: str = DEFAULT_VOICE, language: Optional[str] = None
+        self, text: str, voice: str = DEFAULT_VOICE, language: str | None = None
     ) -> Path:
         """Get the path for an audio file, either from cache or newly generated.
 
@@ -113,10 +112,10 @@ class VoiceReader:
         except AuthenticationError:
             raise AuthenticationError(
                 "OpenAI API key not found. Set the OPENAI_API_KEY environment variable."
-            )
+            ) from None
         except Exception as e:
             # If there's an error, return None and print the error
-            raise Exception(f"Error generating audio: {e}")
+            raise Exception(f"Error generating audio: {e}") from e
 
     def _play_audio_thread(self, audio_path: Path) -> None:
         """Thread function to play audio in the background.
@@ -183,7 +182,7 @@ class VoiceReader:
         self.active_playback_threads.append(thread)
 
     def speak(
-        self, text: str, voice: str = DEFAULT_VOICE, language: Optional[str] = None
+        self, text: str, voice: str = DEFAULT_VOICE, language: str | None = None
     ) -> None:
         """Convert text to speech and play it.
 
@@ -199,4 +198,4 @@ class VoiceReader:
             audio_path = self.get_audio_path(text, voice, language)
             self.play_audio(audio_path)
         except Exception as e:
-            raise Exception(f"Error speaking text: {e}")
+            raise Exception(f"Error speaking text: {e}") from e
