@@ -55,7 +55,7 @@ class VoiceReader:
         self.cache_dir.mkdir(exist_ok=True, parents=True)
 
         # Track active audio threads
-        self.active_playback_threads = []
+        self.active_playback_threads: list[threading.Thread] = []
 
     def get_audio_path(
         self, text: str, voice: str = DEFAULT_VOICE, language: str | None = None
@@ -95,19 +95,22 @@ class VoiceReader:
 
         # Otherwise generate new audio file
         try:
-            # Build request parameters - only include instructions if provided
-            request_params = {
-                "model": DEFAULT_MODEL,
-                "voice": voice,
-                "input": text,
-            }
+            # Create API call with proper typing
             if instructions:
-                request_params["instructions"] = instructions
-
-            with self.client.audio.speech.with_streaming_response.create(
-                **request_params
-            ) as response:
-                response.stream_to_file(audio_path)
+                with self.client.audio.speech.with_streaming_response.create(
+                    model=DEFAULT_MODEL,
+                    voice=voice,
+                    input=text,
+                    instructions=instructions,
+                ) as response:
+                    response.stream_to_file(audio_path)
+            else:
+                with self.client.audio.speech.with_streaming_response.create(
+                    model=DEFAULT_MODEL,
+                    voice=voice,
+                    input=text,
+                ) as response:
+                    response.stream_to_file(audio_path)
             return audio_path
         except AuthenticationError as e:
             # Re-raise the original exception with additional context
@@ -151,7 +154,7 @@ class VoiceReader:
                         )
             elif os.name == "nt":  # Windows
                 # Use startfile on Windows, which is non-blocking
-                os.startfile(audio_path)
+                os.startfile(audio_path)  # type: ignore[attr-defined]
         except Exception:
             # Silently fail in threads
             pass
