@@ -5,6 +5,7 @@ Requires an OPENAI_API_KEY environment variable.
 
 import hashlib
 import os
+import platform
 import subprocess
 import threading
 from pathlib import Path
@@ -132,27 +133,27 @@ class VoiceReader:
                 return
 
             # Use platform-specific commands to play audio
-            if os.name == "posix":  # macOS, Linux
-                if "darwin" in os.uname().sysname.lower():  # macOS
+            system = platform.system().lower()
+            if system == "darwin":  # macOS
+                subprocess.run(
+                    ["afplay", str(audio_path)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            elif system == "linux":  # Linux
+                try:
                     subprocess.run(
-                        ["afplay", str(audio_path)],
+                        ["mpg123", str(audio_path)],
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
                     )
-                else:  # Linux
-                    try:
-                        subprocess.run(
-                            ["mpg123", str(audio_path)],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                        )
-                    except FileNotFoundError:
-                        subprocess.run(
-                            ["aplay", str(audio_path)],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                        )
-            elif os.name == "nt":  # Windows
+                except FileNotFoundError:
+                    subprocess.run(
+                        ["aplay", str(audio_path)],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+            elif system == "windows":  # Windows
                 # Use startfile on Windows, which is non-blocking
                 os.startfile(audio_path)  # type: ignore[attr-defined]
         except Exception:

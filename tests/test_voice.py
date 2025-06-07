@@ -203,13 +203,10 @@ class TestAudioPlayback:
         with pytest.raises(FileNotFoundError):
             self.voice_reader.play_audio(non_existent)
 
-    @patch("os.uname")
     @patch("subprocess.run")
-    def test_play_audio_macos(self, mock_subprocess, mock_uname):
+    def test_play_audio_macos(self, mock_subprocess):
         """Test play_audio on macOS."""
-        mock_uname.return_value.sysname = "Darwin"
-
-        with patch("os.name", "posix"):
+        with patch("platform.system", return_value="Darwin"):
             self.voice_reader.play_audio(self.test_audio_file)
 
         # Should call afplay on macOS
@@ -221,13 +218,10 @@ class TestAudioPlayback:
         # The call should have been made in the background thread
         assert len(self.voice_reader.active_playback_threads) > 0
 
-    @patch("os.uname")
     @patch("subprocess.run")
-    def test_play_audio_linux(self, mock_subprocess, mock_uname):
+    def test_play_audio_linux(self, mock_subprocess):
         """Test play_audio on Linux."""
-        mock_uname.return_value.sysname = "Linux"
-
-        with patch("os.name", "posix"):
+        with patch("platform.system", return_value="Linux"):
             self.voice_reader.play_audio(self.test_audio_file)
 
         import time
@@ -239,7 +233,7 @@ class TestAudioPlayback:
     def test_play_audio_windows(self):
         """Test play_audio on Windows."""
         # Mock os.startfile since it doesn't exist on non-Windows systems
-        with patch("os.name", "nt"):
+        with patch("platform.system", return_value="Windows"):
             with patch("os.startfile", create=True):
                 self.voice_reader.play_audio(self.test_audio_file)
 
@@ -322,27 +316,22 @@ class TestVoiceReaderThreadManagement:
 
         # Mock subprocess to return immediately
         with patch("subprocess.run"):
-            with patch("os.name", "posix"):
-                with patch("os.uname") as mock_uname:
-                    mock_uname.return_value.sysname = "Darwin"
+            with patch("platform.system", return_value="Darwin"):
+                # Start multiple playback threads
+                self.voice_reader.play_audio(test_file)
+                self.voice_reader.play_audio(test_file)
 
-                    # Start multiple playback threads
-                    self.voice_reader.play_audio(test_file)
-                    self.voice_reader.play_audio(test_file)
+                # Wait for threads to complete
+                import time
 
-                    # Wait for threads to complete
-                    import time
+                time.sleep(0.2)
 
-                    time.sleep(0.2)
+                # Trigger cleanup by calling play_audio again
+                self.voice_reader.play_audio(test_file)
 
-                    # Trigger cleanup by calling play_audio again
-                    self.voice_reader.play_audio(test_file)
-
-                    # Completed threads should be cleaned up
-                    alive_threads = [
-                        t
-                        for t in self.voice_reader.active_playback_threads
-                        if t.is_alive()
-                    ]
-                    # Only the most recent thread should still be alive or just finishing
-                    assert len(alive_threads) <= 1
+                # Completed threads should be cleaned up
+                alive_threads = [
+                    t for t in self.voice_reader.active_playback_threads if t.is_alive()
+                ]
+                # Only the most recent thread should still be alive or just finishing
+                assert len(alive_threads) <= 1
