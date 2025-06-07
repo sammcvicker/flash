@@ -131,6 +131,10 @@ class TestVoiceReader:
 
     def test_hash_consistency(self):
         """Test that same inputs produce same hash."""
+        # Create a cached file to avoid API calls
+        cached_file = Path(self.temp_dir) / "consistent_hash.mp3"
+        cached_file.touch()
+
         with patch("hashlib.md5") as mock_md5:
             mock_hash = MagicMock()
             mock_hash.hexdigest.return_value = "consistent_hash"
@@ -148,8 +152,16 @@ class TestVoiceReader:
 
     def test_hash_different_for_different_inputs(self):
         """Test that different inputs produce different hashes."""
+        # Create cached files to avoid API calls
+        cached_file1 = Path(self.temp_dir) / "hash1.mp3"
+        cached_file2 = Path(self.temp_dir) / "hash2.mp3"
+        cached_file1.touch()
+        cached_file2.touch()
+
         with patch("hashlib.md5") as mock_md5:
             mock_hash = MagicMock()
+
+            # First call returns hash1
             mock_hash.hexdigest.return_value = "hash1"
             mock_md5.return_value = mock_hash
 
@@ -157,7 +169,11 @@ class TestVoiceReader:
             self.voice_reader.get_audio_path("text1", "onyx", "english")
             first_call = mock_md5.call_args[0][0]
 
+            # Second call returns hash2
             mock_md5.reset_mock()
+            mock_hash.hexdigest.return_value = "hash2"
+            mock_md5.return_value = mock_hash
+
             self.voice_reader.get_audio_path("text2", "onyx", "english")
             second_call = mock_md5.call_args[0][0]
 

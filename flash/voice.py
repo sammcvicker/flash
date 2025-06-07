@@ -109,10 +109,11 @@ class VoiceReader:
             ) as response:
                 response.stream_to_file(audio_path)
             return audio_path
-        except AuthenticationError:
-            raise AuthenticationError(
-                "OpenAI API key not found. Set the OPENAI_API_KEY environment variable."
-            ) from None
+        except AuthenticationError as e:
+            # Re-raise the original exception with additional context
+            raise Exception(
+                "OpenAI API authentication failed. Please check your API key."
+            ) from e
         except Exception as e:
             # If there's an error, return None and print the error
             raise Exception(f"Error generating audio: {e}") from e
