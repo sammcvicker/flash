@@ -13,7 +13,7 @@ Thank you for your interest in contributing to Flash! This document provides gui
 
 1. **Fork and clone the repository**
    ```bash
-   git clone https://github.com/yourusername/flash.git
+   git clone https://github.com/sammcvicker/flash.git
    cd flash
    ```
 
