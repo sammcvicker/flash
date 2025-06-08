@@ -1,13 +1,51 @@
 [project]
 name = "flash"
 version = "0.1.1"
-description = "A simple flashcard CLI tool using CSV files"
+description = "A highly configurable multi-sided flashcard system for the command line that works with any CSV data"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Sam McVicker", email = "sammcvicker@protonmail.com"},
+]
+maintainers = [
+    {name = "Sam McVicker", email = "sammcvicker@protonmail.com"},
+]
+keywords = [
+    "flashcards",
+    "cli",
+    "csv",
+    "learning",
+    "study",
+    "memorization",
+    "text-to-speech",
+    "education",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Utilities",
+]
 dependencies = [
     "click>=8.1.8",
     "openai>=1.78.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sammcvicker/flash"
+Repository = "https://github.com/sammcvicker/flash"
+Documentation = "https://github.com/sammcvicker/flash#readme"
+"Bug Tracker" = "https://github.com/sammcvicker/flash/issues"
+Changelog = "https://github.com/sammcvicker/flash/blob/main/CHANGELOG.md"
 
 [project.scripts]
 flash = "flash.cli:flash"

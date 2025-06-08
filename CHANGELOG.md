@@ -7,20 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-06-08
+
 ### Added
 - Comprehensive test suite with 36+ tests
 - GitHub Actions CI/CD pipeline
-- Code quality tools (Black, isort, flake8, mypy)
+- Code quality tools (Ruff, mypy)
 - Pre-commit hooks for automated quality checks
 - Contributing guidelines and development documentation
 - MIT license for open source distribution
+- Enhanced PyPI metadata with proper classifiers and keywords
 
 ### Fixed
 - CSV parsing edge cases with Unicode and malformed data
 - Cross-platform audio playback compatibility
 - Error handling for missing OpenAI API keys
+- Version consistency across project files
 
-## [0.1.0] - 2024-01-XX
+## [0.1.0]
 
 ### Added
 - Initial release of Flash flashcard CLI tool
